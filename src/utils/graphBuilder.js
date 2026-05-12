@@ -1,11 +1,11 @@
 import { getNodeHeight, sourceHandleOffset } from './nodeLayout.js'
 
 const EDGE_COLORS = [
-  '#3b82f6', // blue
-  '#10b981', // emerald
-  '#f59e0b', // amber
-  '#ef4444', // red
-  '#8b5cf6', // violet
+  '#4cb7a3', // seafoam
+  '#b49bfc', // lilac
+  '#e27133', // tangerine
+  '#D4A017', // cornflower blue
+  '#e05675', // rose       
 ]
 
 /**
