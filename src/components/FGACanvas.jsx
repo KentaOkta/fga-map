@@ -15,13 +15,14 @@ import '@xyflow/react/dist/style.css'
 import TypeNode from './TypeNode.jsx'
 import SelfLoopEdge from './SelfLoopEdge.jsx'
 import DroppableEdge from './DroppableEdge.jsx'
+import IntraRefEdge from './IntraRefEdge.jsx'
 import { EditModeContext } from './EditModeContext.js'
 import { buildGraphData } from '../utils/graphBuilder.js'
 import { applyDagreLayout } from '../utils/layoutEngine.js'
 import './FGACanvas.css'
 
 const nodeTypes = { typeNode: TypeNode }
-const edgeTypes = { selfLoop: SelfLoopEdge, droppable: DroppableEdge }
+const edgeTypes = { selfLoop: SelfLoopEdge, droppable: DroppableEdge, intraRef: IntraRefEdge }
 
 function Canvas({ parsedModel, expandedNodes, onNodeClick, isEditMode, onToggleEditMode, resetKey, onDropType, onConnect, onRenameType, onRenameRelation, onDeleteType, onDeleteRelation, onDeleteRef, onAddRefCondition, onSelectCondition, onDeleteCondition }) {
   const { screenToFlowPosition } = useReactFlow()

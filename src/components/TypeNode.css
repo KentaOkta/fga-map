@@ -153,6 +153,12 @@
   background: #fef2f2;
 }
 
+/* Invisible intra-type target handles on the right side */
+.type-node__intra-handle {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 /* When bin is being dragged, show headers as targets */
 .bin-dragging .type-node__header {
   cursor: crosshair;

@@ -5,7 +5,7 @@ import { useEditMode } from './EditModeContext.js'
 import './TypeNode.css'
 
 export default function TypeNode({ data }) {
-  const { label, isExpanded, relations = [], sourceRelations = [], orphanedRelations = [] } = data
+  const { label, isExpanded, relations = [], sourceRelations = [], orphanedRelations = [], intraSourceRelations = [] } = data
   const { isEditMode, onRenameType, onRenameRelation, onDeleteType, onDeleteRelation } = useEditMode()
 
   const [editing, setEditing] = useState(false)
@@ -164,7 +164,7 @@ export default function TypeNode({ data }) {
                   top: NODE_HEADER_HEIGHT + i * RELATION_ROW_HEIGHT + RELATION_ROW_HEIGHT / 2,
                 }}
               />
-              {(sourceRelations.includes(r) || isEditMode) && (
+              {(sourceRelations.includes(r) || intraSourceRelations.includes(r) || isEditMode) && (
                 <Handle
                   type="source"
                   position={Position.Right}
@@ -174,6 +174,15 @@ export default function TypeNode({ data }) {
                   }}
                 />
               )}
+              <Handle
+                type="target"
+                position={Position.Right}
+                id={`intra:${r}`}
+                className="type-node__intra-handle"
+                style={{
+                  top: NODE_HEADER_HEIGHT + i * RELATION_ROW_HEIGHT + RELATION_ROW_HEIGHT / 2,
+                }}
+              />
               {editingRelation === r ? (
                 <input
                   className="type-node__relation-input nodrag"

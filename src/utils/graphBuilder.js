@@ -1,5 +1,73 @@
 import { getNodeHeight, sourceHandleOffset } from './nodeLayout.js'
 
+// ── Intra-type relation reference helpers ──────────────────────────────────────
+
+const OPENFGA_KEYWORDS = new Set([
+  'or', 'and', 'not', 'but', 'from', 'define', 'relations', 'type',
+  'model', 'schema', 'condition', 'with', 'self',
+])
+
+/**
+ * Extract bare relation-name references from a definition expression.
+ * Strips all [...] bracket groups first, then collects identifier tokens
+ * that exist in typeRelNames (ignoring OpenFGA keywords).
+ *
+ * Example: "[user] or triager or repo_reader from owner"
+ *   → ['triager', 'repo_reader', 'owner']  (assuming all are in typeRelNames)
+ */
+function extractRelationRefs(definition, typeRelNames) {
+  if (!definition) return []
+  const expr = definition.replace(/\[([^\]]*)\]/g, '')
+  const seen = new Set()
+  const result = []
+  for (const word of (expr.match(/\b[a-zA-Z_]\w*\b/g) ?? [])) {
+    if (OPENFGA_KEYWORDS.has(word)) continue
+    if (!typeRelNames.has(word)) continue
+    if (seen.has(word)) continue
+    seen.add(word)
+    result.push(word)
+  }
+  return result
+}
+
+/**
+ * Topologically sort relations so that referenced relations appear before those that reference them.
+ * This ensures intra-type arrows always point downward.
+ * Falls back gracefully for cycles (appends remaining nodes in original order).
+ */
+function topoSortRelations(relations, typeRelNamesSet) {
+  const successors = new Map(relations.map(r => [r.name, []]))
+  const inDegree = new Map(relations.map(r => [r.name, 0]))
+
+  for (const rel of relations) {
+    for (const dep of extractRelationRefs(rel.definition ?? '', typeRelNamesSet)) {
+      if (dep === rel.name) continue
+      successors.get(dep)?.push(rel.name)
+      inDegree.set(rel.name, inDegree.get(rel.name) + 1)
+    }
+  }
+
+  const queue = relations.filter(r => inDegree.get(r.name) === 0).map(r => r.name)
+  const result = []
+  while (queue.length > 0) {
+    const node = queue.shift()
+    result.push(node)
+    for (const succ of successors.get(node)) {
+      const deg = inDegree.get(succ) - 1
+      inDegree.set(succ, deg)
+      if (deg === 0) queue.push(succ)
+    }
+  }
+
+  // Append any remaining nodes (cycles — shouldn't occur in valid FGA, handled gracefully)
+  const seen = new Set(result)
+  for (const rel of relations) {
+    if (!seen.has(rel.name)) result.push(rel.name)
+  }
+
+  return result
+}
+
 const EDGE_COLORS = [
   '#4cb7a3', // seafoam
   '#b49bfc', // lilac
@@ -137,13 +205,29 @@ export function buildGraphData(parsedModel, expandedNodes) {
       )
       .map(rel => rel.name)
 
-    const relations = [...validRelations, ...fullyOrphaned]
+    const typeRelNamesSet = new Set(type.relations.map(r => r.name))
+
+    // When expanded, show ALL relations in topological order (deps first → arrows point down)
+    // When collapsed, show only relations with cross-type edges
+    const relations = isExpanded
+      ? topoSortRelations(type.relations, typeRelNamesSet)
+      : [...validRelations, ...fullyOrphaned]
 
     // Detect which displayed relations have any ref pointing to a deleted type
     const orphanedRelations = relations.filter(relName => {
       const rel = type.relations.find(r => r.name === relName)
       return rel?.refs.some(ref => !knownTypes.has(ref.typeName))
     })
+
+    // Compute which relations are referenced by other relations on the same type (intra-type refs)
+    const intraSourceRelations = isExpanded
+      ? [...new Set(
+          type.relations.flatMap(rel =>
+            extractRelationRefs(rel.definition ?? '', typeRelNamesSet)
+              .filter(refName => refName !== rel.name)
+          )
+        )]
+      : []
 
     return {
       id: type.name,
@@ -155,6 +239,7 @@ export function buildGraphData(parsedModel, expandedNodes) {
         relations,
         sourceRelations: [...(typeSourceRelations.get(type.name) ?? [])],
         orphanedRelations,
+        intraSourceRelations,
         nodeHeight: getNodeHeight(isExpanded, relations.length),
       },
     }
@@ -268,6 +353,32 @@ export function buildGraphData(parsedModel, expandedNodes) {
     }
     if (sh) edge.sourceHandle = sh
     edges.push(edge)
+  }
+
+  // --- Intra-type relation reference edges (expanded nodes only) ---
+  for (const type of parsedModel.types) {
+    if (!expandedNodes.has(type.name)) continue
+    const typeRelNamesSet = new Set(type.relations.map(r => r.name))
+    for (const rel of type.relations) {
+      const refNames = extractRelationRefs(rel.definition ?? '', typeRelNamesSet)
+        .filter(refName => refName !== rel.name)
+      for (const refName of refNames) {
+        const relIdx = type.relations.findIndex(r => r.name === refName)
+        const color = EDGE_COLORS[relIdx % EDGE_COLORS.length]
+        edges.push({
+          id: `intraref:${type.name}::${refName}->${rel.name}`,
+          source: type.name,
+          target: type.name,
+          sourceHandle: refName,
+          targetHandle: `intra:${rel.name}`,
+          type: 'intraRef',
+          animated: false,
+          style: { stroke: color, strokeDasharray: '4 3', strokeWidth: 1.5 },
+          markerEnd: { type: 'arrowclosed', color },
+          data: {},
+        })
+      }
+    }
   }
 
   return { nodes, edges }
