@@ -19,6 +19,8 @@ body,
   height: 100%;
 }
 
+/* ── Left sidebar ─────────────────────────────────────────────────────────── */
+
 .app__sidebar {
   width: 320px;
   flex-shrink: 0;
@@ -28,6 +30,48 @@ body,
   flex-direction: column;
   overflow: hidden;
 }
+
+.app__sidebar-tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  background: #f9fafb;
+}
+
+.app__sidebar-tab {
+  flex: 1;
+  padding: 9px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.02em;
+}
+
+.app__sidebar-tab:hover {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.app__sidebar-tab--active {
+  color: #6366f1;
+  border-bottom-color: #6366f1;
+  background: #fff;
+}
+
+.app__sidebar-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Canvas ───────────────────────────────────────────────────────────────── */
 
 .app__canvas {
   flex: 1;

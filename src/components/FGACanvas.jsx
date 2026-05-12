@@ -23,7 +23,7 @@ import './FGACanvas.css'
 const nodeTypes = { typeNode: TypeNode }
 const edgeTypes = { selfLoop: SelfLoopEdge, droppable: DroppableEdge }
 
-function Canvas({ parsedModel, expandedNodes, onNodeClick, isEditMode, onToggleEditMode, resetKey, onDropType, onConnect, onRenameType, onRenameRelation, onDeleteType, onDeleteRelation, onDeleteRef }) {
+function Canvas({ parsedModel, expandedNodes, onNodeClick, isEditMode, onToggleEditMode, resetKey, onDropType, onConnect, onRenameType, onRenameRelation, onDeleteType, onDeleteRelation, onDeleteRef, onAddRefCondition, onSelectCondition, onDeleteCondition }) {
   const { screenToFlowPosition } = useReactFlow()
   const pendingPositions = useRef(new Map())
 
@@ -74,9 +74,11 @@ function Canvas({ parsedModel, expandedNodes, onNodeClick, isEditMode, onToggleE
     ? 'Drop a "New Type" card from the Edit panel to get started'
     : 'No model loaded — paste a DSL and click "Parse model"'
 
+  const contextValue = { isEditMode, onRenameType, onRenameRelation, onDeleteType, onDeleteRelation, onDeleteRef, onAddRefCondition, onSelectCondition, onDeleteCondition }
+
   if (!parsedModel || layoutedNodes.length === 0) {
     return (
-      <EditModeContext.Provider value={{ isEditMode, onRenameType, onRenameRelation, onDeleteType, onDeleteRelation, onDeleteRef }}>
+      <EditModeContext.Provider value={contextValue}>
         <div
           className="fga-canvas fga-canvas--empty"
           onDrop={handleDrop}
@@ -89,7 +91,7 @@ function Canvas({ parsedModel, expandedNodes, onNodeClick, isEditMode, onToggleE
   }
 
   return (
-    <EditModeContext.Provider value={{ isEditMode, onRenameType, onRenameRelation, onDeleteType, onDeleteRelation, onDeleteRef }}>
+    <EditModeContext.Provider value={contextValue}>
       <div className="fga-canvas" onDrop={handleDrop} onDragOver={handleDragOver}>
         <ReactFlow
           nodes={nodes}

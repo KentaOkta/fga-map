@@ -125,3 +125,10 @@
 .edit-panel__bin:active {
   cursor: grabbing;
 }
+
+.edit-panel__bin--condition-over {
+  background: #fef2f2;
+  border-color: #ef4444;
+  border-style: solid;
+  color: #ef4444;
+}

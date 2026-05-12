@@ -9,6 +9,68 @@ const EDGE_COLORS = [
 ]
 
 /**
+ * Compute condition symbol and condition names for a specific (target, relationName, source, sourceRelation) slot.
+ * @returns {{ symbol: '*'|'…'|null, conditionNames: string[] }}
+ */
+function computeConditionInfo(parsedModel, targetTypeName, relationName, sourceTypeName, sourceRelation) {
+  const targetType = parsedModel.types.find(t => t.name === targetTypeName)
+  if (!targetType) return { symbol: null, conditionNames: [] }
+  const relation = targetType.relations.find(r => r.name === relationName)
+  if (!relation) return { symbol: null, conditionNames: [] }
+
+  // When sourceRelation is null (source node is collapsed), match ALL refs from
+  // that source type — the edge represents every sourceRelation from that type.
+  // When sourceRelation is set (source node is expanded), match only that specific ref.
+  const matchingRefs = relation.refs.filter(
+    r =>
+      r.typeName === sourceTypeName &&
+      (sourceRelation === null || (r.relationName ?? null) === sourceRelation)
+  )
+
+  const conditioned = matchingRefs.filter(r => r.conditionName != null)
+  const plain = matchingRefs.filter(r => r.conditionName == null)
+
+  let symbol = null
+  if (conditioned.length > 0 && plain.length === 0) symbol = '*'
+  else if (conditioned.length > 0 && plain.length > 0) symbol = '…'
+
+  const conditionNames = [...new Set(conditioned.map(r => r.conditionName))]
+  return { symbol, conditionNames }
+}
+
+/**
+ * Aggregate condition info across multiple relation names for a collapsed edge.
+ * @returns {{ symbol: '*'|'…'|null, conditionNames: string[] }}
+ */
+function computeCollapsedConditionInfo(parsedModel, targetTypeName, relNames, sourceTypeName, sourceRelation) {
+  let totalConditioned = 0
+  let totalPlain = 0
+
+  for (const relName of relNames) {
+    const info = computeConditionInfo(parsedModel, targetTypeName, relName, sourceTypeName, sourceRelation)
+    totalConditioned += info.conditionNames.length
+    // Count plain refs for this relation
+    const targetType = parsedModel.types.find(t => t.name === targetTypeName)
+    const relation = targetType?.relations.find(r => r.name === relName)
+    if (relation) {
+      const matchingPlain = relation.refs.filter(
+        r =>
+          r.typeName === sourceTypeName &&
+          (sourceRelation === null || (r.relationName ?? null) === sourceRelation) &&
+          r.conditionName == null
+      )
+      totalPlain += matchingPlain.length
+    }
+  }
+
+  let symbol = null
+  if (totalConditioned > 0 && totalPlain === 0) symbol = '*'
+  else if (totalConditioned > 0 && totalPlain > 0) symbol = '…'
+
+  return { symbol, conditionNames: [] }
+}
+
+/**
  * Build React Flow nodes and edges from a ParsedModel.
  *
  * @param {object} parsedModel - output of fgaParser.parse
@@ -126,6 +188,9 @@ export function buildGraphData(parsedModel, expandedNodes) {
     const id = `expanded:${source}${sh ? `#${sh}` : ''}->${target}::${relationName}`
     if (seenExpanded.has(id)) continue
     seenExpanded.add(id)
+
+    const conditionInfo = computeConditionInfo(parsedModel, target, relationName, source, sh)
+
     const edge = {
       id,
       source,
@@ -137,6 +202,13 @@ export function buildGraphData(parsedModel, expandedNodes) {
       data: {
         deletePayload: {
           canDelete: true,
+          targetType: target,
+          relation: relationName,
+          refTypeName: source,
+          refRelationName: sh || null,
+        },
+        conditionInfo,
+        conditionPayload: {
           targetType: target,
           relation: relationName,
           refTypeName: source,
@@ -160,6 +232,8 @@ export function buildGraphData(parsedModel, expandedNodes) {
   for (const [key, { source, sourceHandle: sh, target, relNames }] of aggregated.entries()) {
     const count = relNames.size
     const label = count === 1 ? [...relNames][0] : `${count} relations`
+    const conditionInfo = computeCollapsedConditionInfo(parsedModel, target, [...relNames], source, sh)
+
     const edge = {
       id: key,
       source,
@@ -175,6 +249,7 @@ export function buildGraphData(parsedModel, expandedNodes) {
           refTypeName: source,
           refRelationName: sh || null,
         },
+        conditionInfo,
       },
     }
     if (sh) edge.sourceHandle = sh

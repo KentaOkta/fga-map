@@ -12,12 +12,31 @@ export function generate(parsedModel) {
       lines.push('  relations')
       for (const rel of type.relations) {
         const refs = rel.refs
-          .map(r => (r.relationName ? `${r.typeName}#${r.relationName}` : r.typeName))
+          .map(r => {
+            let s = r.relationName ? `${r.typeName}#${r.relationName}` : r.typeName
+            if (r.conditionName) s += ` with ${r.conditionName}`
+            return s
+          })
           .join(', ')
         lines.push(`    define ${rel.name}: [${refs}]`)
       }
     }
     lines.push('')
+  }
+
+  // Emit condition blocks
+  if (parsedModel.conditions?.length) {
+    for (const cond of parsedModel.conditions) {
+      const paramsStr = cond.params.map(p => `${p.name}: ${p.type}`).join(', ')
+      lines.push(`condition ${cond.name}(${paramsStr}) {`)
+      if (cond.expression) {
+        for (const exprLine of cond.expression.split('\n')) {
+          lines.push(`  ${exprLine}`)
+        }
+      }
+      lines.push('}')
+      lines.push('')
+    }
   }
 
   return lines.join('\n').trimEnd()

@@ -7,6 +7,9 @@ export const EditModeContext = createContext({
   onDeleteType: null,
   onDeleteRelation: null,
   onDeleteRef: null,
+  onAddRefCondition: null,
+  onSelectCondition: null,
+  onDeleteCondition: null,
 })
 
 export const useEditMode = () => useContext(EditModeContext)

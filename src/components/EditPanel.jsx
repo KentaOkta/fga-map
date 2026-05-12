@@ -1,6 +1,11 @@
+import { useState } from 'react'
+import { useEditMode } from './EditModeContext.js'
 import './EditPanel.css'
 
 export default function EditPanel({ onClose }) {
+  const { onDeleteCondition } = useEditMode()
+  const [conditionOver, setConditionOver] = useState(false)
+
   function onDragStart(e) {
     e.dataTransfer.setData('application/fga-new-type', 'true')
     e.dataTransfer.effectAllowed = 'move'
@@ -14,6 +19,27 @@ export default function EditPanel({ onClose }) {
 
   function onBinDragEnd() {
     document.body.classList.remove('bin-dragging')
+    setConditionOver(false)
+  }
+
+  function handleBinDragOver(e) {
+    if (e.dataTransfer.types.includes('application/fga-condition')) {
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'move'
+      setConditionOver(true)
+    }
+  }
+
+  function handleBinDragLeave() {
+    setConditionOver(false)
+  }
+
+  function handleBinDrop(e) {
+    const condName = e.dataTransfer.getData('application/fga-condition')
+    if (!condName) return
+    e.preventDefault()
+    setConditionOver(false)
+    onDeleteCondition?.(condName)
   }
 
   return (
@@ -42,12 +68,15 @@ export default function EditPanel({ onClose }) {
       <div className="edit-panel__divider" />
 
       <div className="edit-panel__section">
-        <p className="edit-panel__hint">Drag bin to delete a type, relation, or connection</p>
+        <p className="edit-panel__hint">Drag bin to delete a type, relation, or connection. Drag a condition here to delete it.</p>
         <div
-          className="edit-panel__bin"
+          className={`edit-panel__bin${conditionOver ? ' edit-panel__bin--condition-over' : ''}`}
           draggable
           onDragStart={onBinDragStart}
           onDragEnd={onBinDragEnd}
+          onDragOver={handleBinDragOver}
+          onDragLeave={handleBinDragLeave}
+          onDrop={handleBinDrop}
           title="Drag to delete"
         >
           <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
