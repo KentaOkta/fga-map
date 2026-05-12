@@ -1,0 +1,47 @@
+/* Drop zone positioned at the edge midpoint via EdgeLabelRenderer */
+.droppable-edge__zone {
+  position: absolute;
+  pointer-events: all;
+  /* Invisible by default for unlabeled (expanded) edges */
+}
+
+/* Labeled zone: collapsed edges showing "N relations" or a single name */
+.droppable-edge__zone--labeled {
+  padding: 2px 8px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 11px;
+  color: #374151;
+  white-space: nowrap;
+  cursor: default;
+}
+
+/* ---- Bin dragging highlights ---- */
+
+/* Expanded (unlabeled) edge mid-zone becomes a small target */
+.bin-dragging .droppable-edge__zone--deletable:not(.droppable-edge__zone--labeled) {
+  width: 18px;
+  height: 18px;
+  border: 1.5px dashed #ef4444;
+  border-radius: 50%;
+  background: #fef2f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Labeled edge zone that can be deleted gets a red tint */
+.bin-dragging .droppable-edge__zone--labeled.droppable-edge__zone--deletable {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+/* Self-loop label area when deletable */
+.bin-dragging .multi-label-edge__labels--deletable {
+  outline: 1.5px dashed #ef4444;
+  outline-offset: 2px;
+  border-radius: 10px;
+  background: #fef2f2;
+}

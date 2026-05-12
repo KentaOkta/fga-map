@@ -1,0 +1,44 @@
+.fga-canvas {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+/* Edit mode active state on the Controls button */
+.fga-control-edit--active {
+  background: #ede9fe !important;
+  color: #6366f1 !important;
+}
+
+.fga-canvas--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fga-canvas__empty-msg {
+  color: #9ca3af;
+  font-size: 15px;
+  text-align: center;
+  max-width: 280px;
+}
+
+.multi-label-edge__labels {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  pointer-events: all;
+}
+
+.multi-label-edge__pill {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #374151;
+  white-space: nowrap;
+}

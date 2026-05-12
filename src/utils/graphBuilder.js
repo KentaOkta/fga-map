@@ -1,0 +1,185 @@
+import { getNodeHeight } from './nodeLayout.js'
+
+const EDGE_COLORS = [
+  '#3b82f6', // blue
+  '#10b981', // emerald
+  '#f59e0b', // amber
+  '#ef4444', // red
+  '#8b5cf6', // violet
+]
+
+/**
+ * Build React Flow nodes and edges from a ParsedModel.
+ *
+ * @param {object} parsedModel - output of fgaParser.parse
+ * @param {Set<string>} expandedNodes - set of type names that are expanded
+ * @returns {{ nodes: object[], edges: object[] }}
+ */
+export function buildGraphData(parsedModel, expandedNodes) {
+  if (!parsedModel || !parsedModel.types || parsedModel.types.length === 0) {
+    return { nodes: [], edges: [] }
+  }
+
+  const knownTypes = new Set(parsedModel.types.map((t) => t.name))
+
+  // Collect all candidate edges.
+  // sourceRelation: the specific relation on the source type (e.g. 'assignee' from role#assignee)
+  const candidates = []
+
+  for (const type of parsedModel.types) {
+    for (const relation of type.relations) {
+      for (const ref of relation.refs) {
+        if (!knownTypes.has(ref.typeName)) continue
+        candidates.push({
+          source: ref.typeName,
+          sourceRelation: ref.relationName ?? null,
+          target: type.name,
+          relationName: relation.name,
+        })
+      }
+    }
+  }
+
+  // For each type, collect which of its relation names have at least one incoming edge
+  const typeRelations = new Map()
+  for (const { target, relationName } of candidates) {
+    if (!typeRelations.has(target)) typeRelations.set(target, new Set())
+    typeRelations.get(target).add(relationName)
+  }
+
+  // For each type, collect which of its relations are referenced by others as a source
+  const typeSourceRelations = new Map()
+  for (const { source, sourceRelation } of candidates) {
+    if (!sourceRelation) continue
+    if (!typeSourceRelations.has(source)) typeSourceRelations.set(source, new Set())
+    typeSourceRelations.get(source).add(sourceRelation)
+  }
+
+  // Assign a stable color to each type (used for expanded edges leaving that node)
+  const sourceColorMap = new Map()
+  parsedModel.types.forEach((type, i) => {
+    sourceColorMap.set(type.name, EDGE_COLORS[i % EDGE_COLORS.length])
+  })
+
+  // Build nodes
+  const nodes = parsedModel.types.map((type) => {
+    const isExpanded = expandedNodes.has(type.name)
+    const validRelations = new Set(typeRelations.get(type.name) ?? [])
+
+    // Also show relations whose EVERY ref points to a deleted type (fully orphaned)
+    const fullyOrphaned = type.relations
+      .filter(rel =>
+        rel.refs.length > 0 &&
+        rel.refs.every(ref => !knownTypes.has(ref.typeName)) &&
+        !validRelations.has(rel.name)
+      )
+      .map(rel => rel.name)
+
+    const relations = [...validRelations, ...fullyOrphaned]
+
+    // Detect which displayed relations have any ref pointing to a deleted type
+    const orphanedRelations = relations.filter(relName => {
+      const rel = type.relations.find(r => r.name === relName)
+      return rel?.refs.some(ref => !knownTypes.has(ref.typeName))
+    })
+
+    return {
+      id: type.name,
+      type: 'typeNode',
+      position: { x: 0, y: 0 },
+      data: {
+        label: type.name,
+        isExpanded,
+        relations,
+        sourceRelations: [...(typeSourceRelations.get(type.name) ?? [])],
+        orphanedRelations,
+        nodeHeight: getNodeHeight(isExpanded, relations.length),
+      },
+    }
+  })
+
+  // Determine edges
+  const edges = []
+
+  // Helper: resolve which source handle to use for a candidate
+  function srcHandle(source, sourceRelation) {
+    return expandedNodes.has(source) && sourceRelation ? sourceRelation : null
+  }
+
+  // Helper: build colored edge style for expanded edges
+  function edgeStyle(source) {
+    const color = sourceColorMap.get(source) ?? '#94a3b8'
+    return {
+      style: { stroke: color, strokeWidth: 2 },
+      markerEnd: { type: 'arrowclosed', color },
+    }
+  }
+
+  // Split candidates by whether the target is expanded
+  const expandedCandidates = candidates.filter((c) => expandedNodes.has(c.target))
+  const collapsedCandidates = candidates.filter((c) => !expandedNodes.has(c.target))
+
+  // --- Expanded target edges: one per (sourceHandle, source, target, relation) ---
+  const seenExpanded = new Set()
+  for (const { source, sourceRelation, target, relationName } of expandedCandidates) {
+    const sh = srcHandle(source, sourceRelation)
+    const id = `expanded:${source}${sh ? `#${sh}` : ''}->${target}::${relationName}`
+    if (seenExpanded.has(id)) continue
+    seenExpanded.add(id)
+    const edge = {
+      id,
+      source,
+      target,
+      targetHandle: relationName,
+      type: source === target ? 'selfLoop' : 'droppable',
+      animated: false,
+      ...edgeStyle(source),
+      data: {
+        deletePayload: {
+          canDelete: true,
+          targetType: target,
+          relation: relationName,
+          refTypeName: source,
+          refRelationName: sh || null,
+        },
+      },
+    }
+    if (sh) edge.sourceHandle = sh
+    edges.push(edge)
+  }
+
+  // --- Collapsed target edges: aggregate by (source, sourceHandle, target) ---
+  const aggregated = new Map()
+  for (const { source, sourceRelation, target, relationName } of collapsedCandidates) {
+    const sh = srcHandle(source, sourceRelation)
+    const key = `${source}${sh ? `#${sh}` : ''}->${target}`
+    if (!aggregated.has(key)) aggregated.set(key, { source, sourceHandle: sh, target, relNames: new Set() })
+    aggregated.get(key).relNames.add(relationName)
+  }
+
+  for (const [key, { source, sourceHandle: sh, target, relNames }] of aggregated.entries()) {
+    const count = relNames.size
+    const label = count === 1 ? [...relNames][0] : `${count} relations`
+    const edge = {
+      id: key,
+      source,
+      target,
+      label,
+      type: source === target ? 'selfLoop' : 'droppable',
+      animated: false,
+      data: {
+        deletePayload: {
+          canDelete: count === 1,
+          targetType: target,
+          relation: count === 1 ? [...relNames][0] : null,
+          refTypeName: source,
+          refRelationName: sh || null,
+        },
+      },
+    }
+    if (sh) edge.sourceHandle = sh
+    edges.push(edge)
+  }
+
+  return { nodes, edges }
+}

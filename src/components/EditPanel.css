@@ -1,0 +1,127 @@
+.edit-panel {
+  flex-shrink: 0;
+  height: 72px;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.edit-panel__divider {
+  width: 1px;
+  background: #e5e7eb;
+  flex-shrink: 0;
+  margin: 12px 0;
+}
+
+.edit-panel__section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 5px 16px;
+  gap: 6px;
+}
+
+.edit-panel__section--title {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-width: 120px;
+}
+
+.edit-panel__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.edit-panel__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #6b7280;
+  padding: 2px 5px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.edit-panel__close:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.edit-panel__hint {
+  margin: 0;
+  font-size: 11px;
+  color: #6b7280;
+  line-height: 1.4;
+  max-width: 200px;
+}
+
+/* Draggable new-type card */
+.edit-panel__new-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  height: 32px;
+  background: #ffffff;
+  border: 2px dashed #6366f1;
+  border-radius: 6px;
+  cursor: grab;
+  transition: background 0.15s;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.edit-panel__new-node:hover {
+  background: #f5f3ff;
+}
+
+.edit-panel__new-node:active {
+  cursor: grabbing;
+}
+
+.edit-panel__new-node-label {
+  font-weight: 600;
+  font-size: 13px;
+  color: #6366f1;
+  font-family: 'Courier New', monospace;
+}
+
+.edit-panel__new-node-chevron {
+  font-size: 9px;
+  color: #6366f1;
+}
+
+/* Bin / delete draggable */
+.edit-panel__bin {
+  display: flex;
+  position: relative;
+  bottom: 10px;
+  right: 10px;
+  align-items: center;
+  justify-content: center;
+  align-self: end;
+  min-width: 32px;
+  min-height: 32px;
+  background: #fff;
+  border: 2px dashed #ef4444;
+  border-radius: 6px;
+  color: #ef4444;
+  cursor: grab;
+  transition: background 0.15s;
+  user-select: none;
+}
+
+.edit-panel__bin:hover {
+  background: #fef2f2;
+}
+
+.edit-panel__bin:active {
+  cursor: grabbing;
+}
