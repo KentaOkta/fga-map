@@ -41,22 +41,25 @@ function CollapsibleSection({ title, isOpen, onToggle, headerAction, children })
 
 // ── Type section ──────────────────────────────────────────────────────────────
 
-function RelationRow({ rel, typeName, isEditMode, onRenameRelation, onDeleteRelation }) {
+function RelationRow({ rel, typeName, isEditMode, onRenameRelation, onDeleteRelation, onUpdateRelationDefinition }) {
   const [localName, setLocalName] = useState(rel.name)
+  const [localDef,  setLocalDef]  = useState(rel.definition ?? '')
 
   useEffect(() => { setLocalName(rel.name) }, [rel.name])
+  useEffect(() => { setLocalDef(rel.definition ?? '') }, [rel.definition])
 
-  function handleBlur() {
+  function handleNameBlur() {
     const trimmed = localName.trim()
     if (trimmed && trimmed !== rel.name) onRenameRelation?.(typeName, rel.name, trimmed)
     else setLocalName(rel.name)
   }
 
-  const refsStr = rel.refs.map(r => {
-    let s = r.relationName ? `${r.typeName}#${r.relationName}` : r.typeName
-    if (r.conditionName) s += ` with ${r.conditionName}`
-    return s
-  }).join(', ')
+  function handleDefBlur() {
+    const trimmed = localDef.trim()
+    if (trimmed !== (rel.definition ?? '').trim()) {
+      onUpdateRelationDefinition?.(typeName, rel.name, trimmed)
+    }
+  }
 
   return (
     <div className="inspect-type__relation">
@@ -66,7 +69,7 @@ function RelationRow({ rel, typeName, isEditMode, onRenameRelation, onDeleteRela
             className="inspect-type__relation-input"
             value={localName}
             onChange={e => setLocalName(e.target.value)}
-            onBlur={handleBlur}
+            onBlur={handleNameBlur}
             onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
           />
         ) : (
@@ -82,12 +85,25 @@ function RelationRow({ rel, typeName, isEditMode, onRenameRelation, onDeleteRela
           </button>
         )}
       </div>
-      {refsStr && <div className="inspect-type__refs">{refsStr}</div>}
+      {isEditMode ? (
+        <textarea
+          className="inspect-type__relation-def"
+          value={localDef}
+          onChange={e => setLocalDef(e.target.value)}
+          onBlur={handleDefBlur}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.blur() } }}
+          rows={2}
+          placeholder="[user] or writer…"
+          spellCheck={false}
+        />
+      ) : (
+        rel.definition && <div className="inspect-type__refs">{rel.definition}</div>
+      )}
     </div>
   )
 }
 
-function TypeSection({ parsedModel, selectedTypeName, isEditMode, onRenameType, onRenameRelation, onDeleteRelation }) {
+function TypeSection({ parsedModel, selectedTypeName, isEditMode, onRenameType, onRenameRelation, onDeleteRelation, onUpdateRelationDefinition }) {
   const selectedType = parsedModel?.types.find(t => t.name === selectedTypeName)
   const [localTypeName, setLocalTypeName] = useState(selectedTypeName ?? '')
 
@@ -153,6 +169,7 @@ function TypeSection({ parsedModel, selectedTypeName, isEditMode, onRenameType, 
                   isEditMode={isEditMode}
                   onRenameRelation={onRenameRelation}
                   onDeleteRelation={onDeleteRelation}
+                  onUpdateRelationDefinition={onUpdateRelationDefinition}
                 />
               ))}
             </div>
@@ -340,6 +357,7 @@ export default function InspectPanel({
   onRenameType,
   onRenameRelation,
   onDeleteRelation,
+  onUpdateRelationDefinition,
   onAddCondition,
   onUpdateCondition,
   onDeleteCondition,
@@ -413,6 +431,7 @@ export default function InspectPanel({
           onRenameType={onRenameType}
           onRenameRelation={onRenameRelation}
           onDeleteRelation={onDeleteRelation}
+          onUpdateRelationDefinition={onUpdateRelationDefinition}
         />
       </CollapsibleSection>
 

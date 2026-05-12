@@ -164,7 +164,7 @@ export default function TypeNode({ data }) {
                   top: NODE_HEADER_HEIGHT + i * RELATION_ROW_HEIGHT + RELATION_ROW_HEIGHT / 2,
                 }}
               />
-              {sourceRelations.includes(r) && (
+              {(sourceRelations.includes(r) || isEditMode) && (
                 <Handle
                   type="source"
                   position={Position.Right}

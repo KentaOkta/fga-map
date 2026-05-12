@@ -71,6 +71,21 @@ body,
   overflow: hidden;
 }
 
+/* Each view is always mounted but only the active one is shown.
+   This preserves component state (e.g. unsaved textarea content)
+   across tab switches. */
+.app__sidebar-view {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app__sidebar-view--active {
+  display: flex;
+}
+
 /* ── Canvas ───────────────────────────────────────────────────────────────── */
 
 .app__canvas {

@@ -1,4 +1,4 @@
-import { getNodeHeight } from './nodeLayout.js'
+import { getNodeHeight, sourceHandleOffset } from './nodeLayout.js'
 
 const EDGE_COLORS = [
   '#3b82f6', // blue
@@ -191,12 +191,13 @@ export function buildGraphData(parsedModel, expandedNodes) {
 
     const conditionInfo = computeConditionInfo(parsedModel, target, relationName, source, sh)
 
+    const isSelfLoop = source === target
     const edge = {
       id,
       source,
       target,
       targetHandle: relationName,
-      type: source === target ? 'selfLoop' : 'droppable',
+      type: isSelfLoop ? 'selfLoop' : 'droppable',
       animated: false,
       ...edgeStyle(source),
       data: {
@@ -214,6 +215,12 @@ export function buildGraphData(parsedModel, expandedNodes) {
           refTypeName: source,
           refRelationName: sh || null,
         },
+        ...(isSelfLoop && {
+          sourceHandleOffset: sourceHandleOffset(
+            sh,
+            nodes.find(n => n.id === source)?.data?.relations,
+          ),
+        }),
       },
     }
     if (sh) edge.sourceHandle = sh
@@ -234,12 +241,13 @@ export function buildGraphData(parsedModel, expandedNodes) {
     const label = count === 1 ? [...relNames][0] : `${count} relations`
     const conditionInfo = computeCollapsedConditionInfo(parsedModel, target, [...relNames], source, sh)
 
+    const isSelfLoopC = source === target
     const edge = {
       id: key,
       source,
       target,
       label,
-      type: source === target ? 'selfLoop' : 'droppable',
+      type: isSelfLoopC ? 'selfLoop' : 'droppable',
       animated: false,
       data: {
         deletePayload: {
@@ -250,6 +258,12 @@ export function buildGraphData(parsedModel, expandedNodes) {
           refRelationName: sh || null,
         },
         conditionInfo,
+        ...(isSelfLoopC && {
+          sourceHandleOffset: sourceHandleOffset(
+            sh,
+            nodes.find(n => n.id === source)?.data?.relations,
+          ),
+        }),
       },
     }
     if (sh) edge.sourceHandle = sh

@@ -5,6 +5,7 @@ import {
   addType, addConnection, generateTypeName,
   renameType, renameRelation, deleteType, deleteRelation, deleteRef,
   addCondition, updateCondition, deleteCondition, generateConditionName, addRefWithCondition,
+  updateRelationDefinition,
 } from './utils/modelMutations.js'
 import ModelInput from './components/ModelInput.jsx'
 import FGACanvas from './components/FGACanvas.jsx'
@@ -151,6 +152,14 @@ export default function App() {
     setDslText(generate(newModel))
   }, [parsedModel])
 
+  const handleUpdateRelationDefinition = useCallback((typeName, relName, newDefinition) => {
+    if (!parsedModel) return
+    const newModel = updateRelationDefinition(parsedModel, typeName, relName, newDefinition)
+    if (newModel === parsedModel) return
+    setParsedModel(newModel)
+    setDslText(generate(newModel))
+  }, [parsedModel])
+
   const handleSelectCondition = useCallback((name) => {
     setSelectedConditionName(name)
     setLeftView('inspect')
@@ -175,9 +184,11 @@ export default function App() {
         </div>
 
         <div className="app__sidebar-content">
-          {leftView === 'model' ? (
+          {/* Both views stay mounted so state (including unsaved DSL edits) is never lost */}
+          <div className={`app__sidebar-view${leftView === 'model' ? ' app__sidebar-view--active' : ''}`}>
             <ModelInput onParse={handleParse} dslValue={dslText} />
-          ) : (
+          </div>
+          <div className={`app__sidebar-view${leftView === 'inspect' ? ' app__sidebar-view--active' : ''}`}>
             <InspectPanel
               parsedModel={parsedModel}
               selectedTypeName={selectedTypeName}
@@ -186,11 +197,12 @@ export default function App() {
               onRenameType={handleRenameType}
               onRenameRelation={handleRenameRelation}
               onDeleteRelation={handleDeleteRelation}
+              onUpdateRelationDefinition={handleUpdateRelationDefinition}
               onAddCondition={handleAddCondition}
               onUpdateCondition={handleUpdateCondition}
               onDeleteCondition={handleDeleteCondition}
             />
-          )}
+          </div>
         </div>
       </aside>
 

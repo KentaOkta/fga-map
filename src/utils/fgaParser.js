@@ -102,7 +102,7 @@ export function parse(dslText) {
         }
       }
 
-      currentType.relations.push({ name: relName, refs })
+      currentType.relations.push({ name: relName, refs, definition: expr.trim() })
       continue
     }
 

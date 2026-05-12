@@ -262,6 +262,29 @@
   word-break: break-all;
 }
 
+/* ── Relation definition textarea (edit mode) ─────────────────────────────── */
+
+.inspect-type__relation-def {
+  width: 100%;
+  margin-top: 4px;
+  font-size: 10px;
+  font-family: 'Menlo', 'Consolas', monospace;
+  border: 1px solid #bfdbfe;
+  border-radius: 3px;
+  padding: 4px 6px;
+  resize: vertical;
+  outline: none;
+  background: #fff;
+  color: #374151;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+
+.inspect-type__relation-def:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
 /* ── Condition list ───────────────────────────────────────────────────────── */
 
 .inspect-cond__list {

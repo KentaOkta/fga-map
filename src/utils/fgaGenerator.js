@@ -11,14 +11,19 @@ export function generate(parsedModel) {
     if (type.relations.length > 0) {
       lines.push('  relations')
       for (const rel of type.relations) {
-        const refs = rel.refs
-          .map(r => {
-            let s = r.relationName ? `${r.typeName}#${r.relationName}` : r.typeName
-            if (r.conditionName) s += ` with ${r.conditionName}`
-            return s
-          })
-          .join(', ')
-        lines.push(`    define ${rel.name}: [${refs}]`)
+        // Use stored definition if available; fall back to reconstructing from refs.
+        let defText = rel.definition
+        if (defText == null) {
+          const refs = rel.refs
+            .map(r => {
+              let s = r.relationName ? `${r.typeName}#${r.relationName}` : r.typeName
+              if (r.conditionName) s += ` with ${r.conditionName}`
+              return s
+            })
+            .join(', ')
+          defText = `[${refs}]`
+        }
+        lines.push(`    define ${rel.name}: ${defText}`)
       }
     }
     lines.push('')

@@ -1,8 +1,11 @@
 import { BaseEdge, EdgeLabelRenderer } from '@xyflow/react'
 import { useEditMode } from './EditModeContext.js'
 
-const LOOP_HEIGHT = 110
+// Minimum loop height when the source handle is at the node header.
+const MIN_LOOP_HEIGHT = 110
 const LOOP_SPREAD = 80
+// Extra clearance above the node top (px).
+const CLEARANCE = 40
 
 export default function SelfLoopEdge({
   id,
@@ -15,19 +18,25 @@ export default function SelfLoopEdge({
   markerEnd,
   style,
 }) {
+  // The cubic bezier arc peaks at approximately sourceY - 0.75 * loopHeight (at t=0.5).
+  // To guarantee the peak clears the node top:
+  //   loopHeight >= (sourceHandleOffset + CLEARANCE) / 0.75
+  const handleOffset = data?.sourceHandleOffset ?? MIN_LOOP_HEIGHT
+  const loopHeight = Math.max(MIN_LOOP_HEIGHT, (handleOffset + CLEARANCE) / 0.75)
+
   // Draw a cubic bezier that arcs above the node.
   // Source handle is on the right, target handle is on the left of the same node.
-  const absDiffY= Math.max(2 * Math.abs(sourceY - targetY), LOOP_HEIGHT);
+  const absDiffY = Math.max(2 * Math.abs(sourceY - targetY), loopHeight)
   const edgePath = [
     `M ${sourceX} ${sourceY}`,
-    `C ${sourceX + LOOP_SPREAD} ${sourceY - LOOP_HEIGHT},`,
+    `C ${sourceX + LOOP_SPREAD} ${sourceY - loopHeight},`,
     `${targetX - LOOP_SPREAD} ${sourceY - absDiffY},`,
     `${targetX} ${targetY}`,
   ].join(' ')
 
-  // Label at the peak of the arc (t=0.5 of the cubic bezier)
+  // Label at the approximate peak of the arc (t≈0.5 on the cubic bezier)
   const labelX = (sourceX + targetX) / 2
-  const labelY = (sourceY + targetY) / 2 - LOOP_HEIGHT * 0.75
+  const labelY = (sourceY + targetY) / 2 - loopHeight * 0.75
 
   const { isEditMode, onDeleteRef, onAddRefCondition, onSelectCondition } = useEditMode()
   const payload = data?.deletePayload
