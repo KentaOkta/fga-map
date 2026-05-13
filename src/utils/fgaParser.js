@@ -69,8 +69,8 @@ export function parse(dslText) {
       continue
     }
 
-    // "type <name>" — start a new type block
-    const typeMatch = line.match(/^type\s+(\w+)/)
+    // "type <name>" — start a new type block (type names may contain hyphens)
+    const typeMatch = line.match(/^type\s+([\w-]+)/)
     if (typeMatch) {
       currentType = { name: typeMatch[1], relations: [] }
       types.push(currentType)
@@ -91,7 +91,7 @@ export function parse(dslText) {
         const inner = bracketMatch[1]
         // Each entry is like "user", "group#member", or "user with condition_name"
         for (const entry of inner.split(',')) {
-          const refMatch = entry.trim().match(/^(\w+)(?:#(\w+))?(?:\s+with\s+(\w+))?$/)
+          const refMatch = entry.trim().match(/^([\w-]+)(?:#(\w+))?(?:\s+with\s+(\w+))?$/)
           if (refMatch) {
             refs.push({
               typeName: refMatch[1],

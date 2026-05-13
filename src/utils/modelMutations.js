@@ -17,7 +17,7 @@ function refsFromDefinition(expr) {
   let m
   while ((m = bracketRegex.exec(expr)) !== null) {
     for (const entry of m[1].split(',')) {
-      const rm = entry.trim().match(/^(\w+)(?:#(\w+))?(?:\s+with\s+(\w+))?$/)
+      const rm = entry.trim().match(/^([\w-]+)(?:#(\w+))?(?:\s+with\s+(\w+))?$/)
       if (rm) refs.push({ typeName: rm[1], relationName: rm[2] || null, conditionName: rm[3] || null })
     }
   }
@@ -42,7 +42,7 @@ function appendRefToDefinition(definition, refStr) {
 function removeFromDefinition(definition, refTypeName, refRelationName) {
   return definition.replace(/\[([^\]]*)\]/g, (match, inner) => {
     const kept = inner.split(',').map(s => s.trim()).filter(entry => {
-      const m = entry.match(/^(\w+)(?:#(\w+))?/)
+      const m = entry.match(/^([\w-]+)(?:#(\w+))?/)
       if (!m) return true
       return !(m[1] === refTypeName && (m[2] || null) === (refRelationName ?? null))
     })
@@ -56,7 +56,7 @@ function renameTypeInDefinition(definition, oldName, newName) {
   return definition.replace(/\[([^\]]*)\]/g, (_, inner) => {
     const updated = inner.split(',').map(s => {
       const entry = s.trim()
-      const m = entry.match(/^(\w+)((?:#\w+)?)((?:\s+with\s+\w+)?)$/)
+      const m = entry.match(/^([\w-]+)((?:#\w+)?)((?:\s+with\s+\w+)?)$/)
       if (m && m[1] === oldName) return `${newName}${m[2]}${m[3]}`
       return entry
     }).join(', ')
