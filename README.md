@@ -66,22 +66,6 @@ The lower part of the Inspect panel lists every `condition` block defined in the
 
 Clicking a condition name badge on an expanded edge in the graph automatically opens the Inspect tab and scrolls to that condition.
 
----
-
-## Conditions
-
-OpenFGA 1.1 supports `condition` blocks at the model level. Relations can reference types with a condition using the `with` keyword:
-
-```
-type document
-  relations
-    define viewer: [user with non_expired_grant, group#member]
-
-condition non_expired_grant(current_time: timestamp, grant_time: timestamp, grant_duration: duration) {
-  current_time < grant_time + grant_duration
-}
-```
-
 ### Condition indicators on edges
 
 | Symbol | Meaning |
@@ -134,42 +118,6 @@ The **bin** (bottom of the Inspect panel) is the primary delete tool:
 | **Relation** | Drag the bin onto the relation row inside the expanded node |
 | **Connection / edge** | Drag the bin onto the edge label (collapsed) or the midpoint zone (expanded) |
 | **Condition** | Drag the bin onto the condition item in the panel, or drag the condition onto the bin |
-
----
-
-## DSL Reference
-
-fga-map parses and generates the [OpenFGA 1.1 DSL](https://openfga.dev/docs/configuration-language). Supported constructs:
-
-```
-model
-  schema 1.1
-
-type <name>
-  relations
-    define <relation>: [<ref>, ...]
-
-condition <name>(<param>: <type>, ...) {
-  <CEL expression>
-}
-```
-
-### Ref formats
-
-| Format | Meaning |
-|--------|---------|
-| `user` | Direct reference to the `user` type |
-| `group#member` | Users who are `member` of a `group` |
-| `user with condition_name` | Reference gated by a condition |
-| `group#member with condition_name` | Userset reference gated by a condition |
-
-### Supported condition parameter types
-
-**Basic:** `bool` `string` `int` `uint` `double` `duration` `timestamp` `ipaddress`
-
-**List:** `list<string>` `list<int>` `list<uint>` `list<double>` `list<bool>` `list<duration>` `list<timestamp>`
-
-**Map:** `map<string>` `map<int>` `map<uint>` `map<double>` `map<bool>` `map<duration>` `map<timestamp>`
 
 ---
 
