@@ -19,6 +19,8 @@ import IntraRefEdge from './IntraRefEdge.jsx'
 import { EditModeContext } from './EditModeContext.js'
 import { buildGraphData } from '../utils/graphBuilder.js'
 import { applyDagreLayout } from '../utils/layoutEngine.js'
+import Pencil from '/dist/assets/pencil.svg'
+import Padlock from '/dist/assets/padlock.svg'
 import './FGACanvas.css'
 
 const nodeTypes = { typeNode: TypeNode }
@@ -116,10 +118,7 @@ function Canvas({ parsedModel, expandedNodes, onNodeClick, isEditMode, onToggleE
               title="Toggle edit mode"
               className={isEditMode ? 'fga-control-edit--active' : ''}
             >
-              <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12.854.146a.5.5 0 0 0-.707 0l-3 3 .707.708L12.5 1.707l1.793 1.793-9.5 9.5H4.5v-.293l9.5-9.5L12.854.146zM3.5 11H3v.5l-1.5 1 .5.5 1-1.5H3.5V11z"/>
-                <path d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
-              </svg>
+              <img src={Pencil} alt="Edit Mode" />
             </ControlButton>
           </Controls>
           <MiniMap nodeColor="#6366f1" maskColor="rgba(0,0,0,0.05)" />
